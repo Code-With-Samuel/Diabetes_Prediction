@@ -1,0 +1,1910 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "8f774ff1",
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:50.165962Z",
+     "iopub.status.busy": "2025-12-24T04:35:50.165618Z",
+     "iopub.status.idle": "2025-12-24T04:35:51.398852Z",
+     "shell.execute_reply": "2025-12-24T04:35:51.397634Z"
+    },
+    "papermill": {
+     "duration": 1.245123,
+     "end_time": "2025-12-24T04:35:51.401561",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:50.156438",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "/kaggle/input/playground-series-s5e12/sample_submission.csv\n",
+      "/kaggle/input/playground-series-s5e12/train.csv\n",
+      "/kaggle/input/playground-series-s5e12/test.csv\n"
+     ]
+    }
+   ],
+   "source": [
+    "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+    "# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python\n",
+    "# For example, here's several helpful packages to load\n",
+    "\n",
+    "import numpy as np # linear algebra\n",
+    "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+    "\n",
+    "# Input data files are available in the read-only \"../input/\" directory\n",
+    "# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory\n",
+    "\n",
+    "import os\n",
+    "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+    "    for filename in filenames:\n",
+    "        print(os.path.join(dirname, filename))\n",
+    "\n",
+    "# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using \"Save & Run All\" \n",
+    "# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "24791408",
+   "metadata": {
+    "papermill": {
+     "duration": 0.006472,
+     "end_time": "2025-12-24T04:35:51.415430",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:51.408958",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a2147a80",
+   "metadata": {
+    "papermill": {
+     "duration": 0.006279,
+     "end_time": "2025-12-24T04:35:51.428185",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:51.421906",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 1. Setup and Data Loading"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "1a97f976",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:51.443859Z",
+     "iopub.status.busy": "2025-12-24T04:35:51.443361Z",
+     "iopub.status.idle": "2025-12-24T04:35:51.448868Z",
+     "shell.execute_reply": "2025-12-24T04:35:51.447916Z"
+    },
+    "papermill": {
+     "duration": 0.01549,
+     "end_time": "2025-12-24T04:35:51.451084",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:51.435594",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')\n",
+    "import time\n",
+    "from datetime import datetime"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "fc90b034",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:51.466636Z",
+     "iopub.status.busy": "2025-12-24T04:35:51.465880Z",
+     "iopub.status.idle": "2025-12-24T04:35:55.105845Z",
+     "shell.execute_reply": "2025-12-24T04:35:55.104538Z"
+    },
+    "papermill": {
+     "duration": 3.65078,
+     "end_time": "2025-12-24T04:35:55.108447",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:51.457667",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "================================================================================\n",
+      " COMPLETE 8-MODEL EVALUATION PIPELINE\n",
+      "Started: 04:35:51\n",
+      "================================================================================\n",
+      "\n",
+      "1. LOADING DATA...\n",
+      " Loaded from Kaggle\n",
+      " Using 150,000 samples for evaluation\n",
+      "Train: (150000, 26), Test: (300000, 25)\n",
+      "Time: 3.6s\n"
+     ]
+    }
+   ],
+   "source": [
+    "start_time = time.time()\n",
+    "print(\"=\" * 80)\n",
+    "print(\" COMPLETE 8-MODEL EVALUATION PIPELINE\")\n",
+    "print(f\"Started: {datetime.now().strftime('%H:%M:%S')}\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "print(\"\\n1. LOADING DATA...\")\n",
+    "train_df = pd.read_csv('/kaggle/input/playground-series-s5e12/train.csv')\n",
+    "test_df = pd.read_csv('/kaggle/input/playground-series-s5e12/test.csv')\n",
+    "print(\" Loaded from Kaggle\")\n",
+    "\n",
+    "# Use 150K samples for evaluation\n",
+    "SAMPLE_SIZE = 150000\n",
+    "if len(train_df) > SAMPLE_SIZE:\n",
+    "    train_df = train_df.sample(SAMPLE_SIZE, random_state=42)\n",
+    "    print(f\" Using {SAMPLE_SIZE:,} samples for evaluation\")\n",
+    "\n",
+    "print(f\"Train: {train_df.shape}, Test: {test_df.shape}\")\n",
+    "print(f\"Time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "985ebcc3",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007321,
+     "end_time": "2025-12-24T04:35:55.122593",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.115272",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4aed7165",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00678,
+     "end_time": "2025-12-24T04:35:55.136514",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.129734",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 2. Data Analysis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "e1e92595",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:55.152522Z",
+     "iopub.status.busy": "2025-12-24T04:35:55.152142Z",
+     "iopub.status.idle": "2025-12-24T04:35:55.181597Z",
+     "shell.execute_reply": "2025-12-24T04:35:55.180442Z"
+    },
+    "papermill": {
+     "duration": 0.040579,
+     "end_time": "2025-12-24T04:35:55.184324",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.143745",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "2. DATA ANALYSIS\n",
+      "================================================================================\n",
+      "Target distribution:\n",
+      "  Diabetes: 62.40%\n",
+      "  Non-diabetes: 37.60%\n",
+      "  Ratio: 0.6:1\n",
+      "\n",
+      "Feature types:\n",
+      "  Numerical: 18\n",
+      "  Categorical: 6\n",
+      "Time: 3.7s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"2. DATA ANALYSIS\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "print(\"Target distribution:\")\n",
+    "diabetes_rate = train_df['diagnosed_diabetes'].mean()\n",
+    "print(f\"  Diabetes: {diabetes_rate:.2%}\")\n",
+    "print(f\"  Non-diabetes: {1-diabetes_rate:.2%}\")\n",
+    "print(f\"  Ratio: {(1-diabetes_rate)/diabetes_rate:.1f}:1\")\n",
+    "\n",
+    "print(\"\\nFeature types:\")\n",
+    "num_cols = train_df.select_dtypes(include=[np.number]).columns.tolist()\n",
+    "cat_cols = train_df.select_dtypes(include=['object']).columns.tolist()\n",
+    "num_cols = [c for c in num_cols if c not in ['id', 'diagnosed_diabetes']]\n",
+    "\n",
+    "print(f\"  Numerical: {len(num_cols)}\")\n",
+    "print(f\"  Categorical: {len(cat_cols)}\")\n",
+    "print(f\"Time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c168530c",
+   "metadata": {
+    "papermill": {
+     "duration": 0.008342,
+     "end_time": "2025-12-24T04:35:55.199477",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.191135",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "798aee96",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007308,
+     "end_time": "2025-12-24T04:35:55.214831",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.207523",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 3. Feature Engineering"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "bda5436e",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:55.230739Z",
+     "iopub.status.busy": "2025-12-24T04:35:55.230387Z",
+     "iopub.status.idle": "2025-12-24T04:35:55.349721Z",
+     "shell.execute_reply": "2025-12-24T04:35:55.348235Z"
+    },
+    "papermill": {
+     "duration": 0.129854,
+     "end_time": "2025-12-24T04:35:55.351982",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.222128",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "3. FEATURE ENGINEERING\n",
+      "================================================================================\n",
+      "Added 9 engineered features\n",
+      "Total features: 32\n",
+      "Time: 3.9s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"3. FEATURE ENGINEERING\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "def create_features(df):\n",
+    "    df = df.copy()\n",
+    "    # Health risk features\n",
+    "    df['bmi_age'] = df['bmi'] * df['age'] / 100\n",
+    "    df['waist_bmi'] = df['waist_to_hip_ratio'] * df['bmi']\n",
+    "    \n",
+    "    # Blood pressure\n",
+    "    df['pulse_pressure'] = df['systolic_bp'] - df['diastolic_bp']\n",
+    "    \n",
+    "    # Cholesterol ratios\n",
+    "    df['chol_hdl_ratio'] = df['cholesterol_total'] / (df['hdl_cholesterol'] + 1)\n",
+    "    df['trig_hdl_ratio'] = df['triglycerides'] / (df['hdl_cholesterol'] + 1)\n",
+    "    \n",
+    "    # Lifestyle score\n",
+    "    df['health_score'] = (\n",
+    "        df['diet_score'] * 0.3 +\n",
+    "        np.log1p(df['physical_activity_minutes_per_week']) * 0.3 +\n",
+    "        (8 - df['sleep_hours_per_day']).clip(0, 4) * 0.2 +\n",
+    "        (6 - df['screen_time_hours_per_day']).clip(0, 4) * 0.2\n",
+    "    )\n",
+    "    \n",
+    "    # Risk flags\n",
+    "    df['is_senior'] = (df['age'] >= 60).astype(int)\n",
+    "    df['is_obese'] = (df['bmi'] >= 30).astype(int)\n",
+    "    \n",
+    "    return df\n",
+    "\n",
+    "train_df = create_features(train_df)\n",
+    "test_df = create_features(test_df)\n",
+    "print(f\"Added 9 engineered features\")\n",
+    "print(f\"Total features: {train_df.shape[1] - 2}\")\n",
+    "print(f\"Time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4f102a20",
+   "metadata": {
+    "papermill": {
+     "duration": 0.006733,
+     "end_time": "2025-12-24T04:35:55.365909",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.359176",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "88c491e8",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007729,
+     "end_time": "2025-12-24T04:35:55.380830",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.373101",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 4. Data Preparation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "4282e7ee",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:55.396057Z",
+     "iopub.status.busy": "2025-12-24T04:35:55.395687Z",
+     "iopub.status.idle": "2025-12-24T04:35:55.546785Z",
+     "shell.execute_reply": "2025-12-24T04:35:55.545667Z"
+    },
+    "papermill": {
+     "duration": 0.161631,
+     "end_time": "2025-12-24T04:35:55.549223",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.387592",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "4. DATA PREPARATION\n",
+      "================================================================================\n",
+      "Training features: (150000, 32)\n",
+      "Test features: (300000, 32)\n",
+      "Target: (150000,)\n",
+      "Numerical: 26, Categorical: 6\n",
+      "Time: 4.1s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"4. DATA PREPARATION\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "X = train_df.drop(['id', 'diagnosed_diabetes'], axis=1)\n",
+    "y = train_df['diagnosed_diabetes']\n",
+    "X_test = test_df.drop('id', axis=1)\n",
+    "test_ids = test_df['id']\n",
+    "\n",
+    "# Update column lists\n",
+    "cat_cols = X.select_dtypes(include=['object']).columns.tolist()\n",
+    "num_cols = X.select_dtypes(include=[np.number]).columns.tolist()\n",
+    "\n",
+    "print(f\"Training features: {X.shape}\")\n",
+    "print(f\"Test features: {X_test.shape}\")\n",
+    "print(f\"Target: {y.shape}\")\n",
+    "print(f\"Numerical: {len(num_cols)}, Categorical: {len(cat_cols)}\")\n",
+    "print(f\"Time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6e08f617",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007976,
+     "end_time": "2025-12-24T04:35:55.563978",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.556002",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8ac85a1a",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007399,
+     "end_time": "2025-12-24T04:35:55.578144",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.570745",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 5. Preprocessing Pipeline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "e63a5dfa",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:55.593398Z",
+     "iopub.status.busy": "2025-12-24T04:35:55.592855Z",
+     "iopub.status.idle": "2025-12-24T04:35:58.008826Z",
+     "shell.execute_reply": "2025-12-24T04:35:58.007602Z"
+    },
+    "papermill": {
+     "duration": 2.426272,
+     "end_time": "2025-12-24T04:35:58.010990",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:55.584718",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "5. PREPROCESSING PIPELINE\n",
+      "================================================================================\n",
+      "Preprocessor configured\n",
+      "Will process 26 numerical features\n",
+      "Will process 6 categorical features\n",
+      "Time: 6.5s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"5. PREPROCESSING PIPELINE\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "from sklearn.preprocessing import StandardScaler, OneHotEncoder\n",
+    "from sklearn.compose import ColumnTransformer\n",
+    "from sklearn.pipeline import Pipeline\n",
+    "\n",
+    "# Simple preprocessing\n",
+    "preprocessor = ColumnTransformer([\n",
+    "    ('num', StandardScaler(), num_cols),\n",
+    "    ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_cols)\n",
+    "])\n",
+    "\n",
+    "print(\"Preprocessor configured\")\n",
+    "print(f\"Will process {len(num_cols)} numerical features\")\n",
+    "print(f\"Will process {len(cat_cols)} categorical features\")\n",
+    "print(f\"Time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "2d328f7c",
+   "metadata": {
+    "papermill": {
+     "duration": 0.006865,
+     "end_time": "2025-12-24T04:35:58.024715",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:58.017850",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "22e73926",
+   "metadata": {
+    "papermill": {
+     "duration": 0.0068,
+     "end_time": "2025-12-24T04:35:58.038375",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:58.031575",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 6. 8-Model Evaluation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "953011c5",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:35:58.054573Z",
+     "iopub.status.busy": "2025-12-24T04:35:58.053969Z",
+     "iopub.status.idle": "2025-12-24T04:36:08.129241Z",
+     "shell.execute_reply": "2025-12-24T04:36:08.128389Z"
+    },
+    "papermill": {
+     "duration": 10.086136,
+     "end_time": "2025-12-24T04:36:08.131546",
+     "exception": false,
+     "start_time": "2025-12-24T04:35:58.045410",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "6. 8-MODEL EVALUATION\n",
+      "================================================================================\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"6. 8-MODEL EVALUATION\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "\n",
+    "from sklearn.linear_model import LogisticRegression, SGDClassifier\n",
+    "from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, ExtraTreesClassifier\n",
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "from xgboost import XGBClassifier\n",
+    "from lightgbm import LGBMClassifier\n",
+    "from sklearn.model_selection import cross_val_score, StratifiedKFold\n",
+    "\n",
+    "\n",
+    "# Define 5 different models\n",
+    "models = {\n",
+    "    'LogisticRegression': LogisticRegression(\n",
+    "        random_state=42, max_iter=1000, class_weight='balanced',\n",
+    "        C=0.1, solver='liblinear', n_jobs=1\n",
+    "    ),\n",
+    "    \n",
+    "    'RandomForest': RandomForestClassifier(\n",
+    "        random_state=42, n_estimators=150, class_weight='balanced',\n",
+    "        max_depth=12, min_samples_split=10, n_jobs=-1\n",
+    "    ),\n",
+    "    \n",
+    "    'ExtraTrees': ExtraTreesClassifier(\n",
+    "        random_state=42, n_estimators=150, class_weight='balanced',\n",
+    "        max_depth=12, min_samples_split=10, n_jobs=-1\n",
+    "    ),\n",
+    "    \n",
+    "    'GradientBoosting': GradientBoostingClassifier(\n",
+    "        random_state=42, n_estimators=150,\n",
+    "        learning_rate=0.05, max_depth=6, subsample=0.8\n",
+    "    ),\n",
+    "    \n",
+    "    'XGBoost': XGBClassifier(\n",
+    "        random_state=42, n_estimators=150,\n",
+    "        learning_rate=0.05, max_depth=8,\n",
+    "        subsample=0.8, colsample_bytree=0.8,\n",
+    "        eval_metric='logloss', use_label_encoder=False,\n",
+    "        verbosity=0, n_jobs=-1\n",
+    "    ),\n",
+    "    \n",
+    "    'LightGBM': LGBMClassifier(\n",
+    "        random_state=42, n_estimators=150,\n",
+    "        learning_rate=0.05, num_leaves=31, max_depth=8,\n",
+    "        subsample=0.8, colsample_bytree=0.8,\n",
+    "        verbosity=-1, n_jobs=-1\n",
+    "    ),\n",
+    "    \n",
+    "    'KNeighbors': KNeighborsClassifier(\n",
+    "        n_neighbors=50, weights='distance',\n",
+    "        n_jobs=-1\n",
+    "    ),\n",
+    "    \n",
+    "    'SGDClassifier': SGDClassifier(\n",
+    "        random_state=42, max_iter=1000,\n",
+    "        loss='log_loss', class_weight='balanced',\n",
+    "        n_jobs=-1, early_stopping=True\n",
+    "    )\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "ceb1a51f",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:36:08.148037Z",
+     "iopub.status.busy": "2025-12-24T04:36:08.147232Z",
+     "iopub.status.idle": "2025-12-24T04:44:57.983283Z",
+     "shell.execute_reply": "2025-12-24T04:44:57.982063Z"
+    },
+    "papermill": {
+     "duration": 529.846935,
+     "end_time": "2025-12-24T04:44:57.985584",
+     "exception": false,
+     "start_time": "2025-12-24T04:36:08.138649",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Evaluating 8 models with 3-fold cross-validation...\n",
+      "------------------------------------------------------------\n",
+      "\n",
+      "[1/8] LogisticRegression...\n",
+      "  AUC: 0.694917 (±0.001055)\n",
+      "  Time: 6.5s\n",
+      "  New best!\n",
+      "\n",
+      "[2/8] RandomForest...\n",
+      "  AUC: 0.696339 (±0.001574)\n",
+      "  Time: 46.1s\n",
+      "  New best!\n",
+      "\n",
+      "[3/8] ExtraTrees...\n",
+      "  AUC: 0.685132 (±0.000679)\n",
+      "  Time: 34.8s\n",
+      "\n",
+      "[4/8] GradientBoosting...\n",
+      "  AUC: 0.711093 (±0.000573)\n",
+      "  Time: 210.7s\n",
+      "  New best!\n",
+      "\n",
+      "[5/8] XGBoost...\n",
+      "  AUC: 0.713700 (±0.001436)\n",
+      "  Time: 8.2s\n",
+      "  New best!\n",
+      "\n",
+      "[6/8] LightGBM...\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names\n",
+      "  warnings.warn(\n",
+      "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names\n",
+      "  warnings.warn(\n",
+      "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names\n",
+      "  warnings.warn(\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "  AUC: 0.714791 (±0.000811)\n",
+      "  Time: 157.3s\n",
+      "  New best!\n",
+      "\n",
+      "[7/8] KNeighbors...\n",
+      "  AUC: 0.667917 (±0.001690)\n",
+      "  Time: 63.7s\n",
+      "\n",
+      "[8/8] SGDClassifier...\n",
+      "  AUC: 0.672362 (±0.001770)\n",
+      "  Time: 2.5s\n",
+      "\n",
+      "============================================================\n",
+      "BEST MODEL: LightGBM\n",
+      "Best AUC: 0.714791\n",
+      "============================================================\n",
+      "Total evaluation time: 546.5s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Evaluating 8 models with 3-fold cross-validation...\")\n",
+    "print(\"-\" * 60)\n",
+    "\n",
+    "best_score = 0\n",
+    "best_model = None\n",
+    "best_model_name = \"\"\n",
+    "results = {}\n",
+    "\n",
+    "for i, (name, model) in enumerate(models.items(), 1):\n",
+    "    model_start = time.time()\n",
+    "    \n",
+    "    print(f\"\\n[{i}/8] {name}...\")\n",
+    "    \n",
+    "    try:\n",
+    "        # Create pipeline\n",
+    "        pipeline = Pipeline([\n",
+    "            ('preprocessor', preprocessor),\n",
+    "            ('classifier', model)\n",
+    "        ])\n",
+    "        \n",
+    "        # 3-fold CV\n",
+    "        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)\n",
+    "        scores = cross_val_score(pipeline, X, y, cv=cv, \n",
+    "                               scoring='roc_auc', n_jobs=-1)\n",
+    "        \n",
+    "        elapsed = time.time() - model_start\n",
+    "        \n",
+    "        results[name] = {\n",
+    "            'auc': scores.mean(),\n",
+    "            'std': scores.std(),\n",
+    "            'time': elapsed,\n",
+    "            'scores': scores\n",
+    "        }\n",
+    "        \n",
+    "        print(f\"  AUC: {scores.mean():.6f} (±{scores.std():.6f})\")\n",
+    "        print(f\"  Time: {elapsed:.1f}s\")\n",
+    "        \n",
+    "        if scores.mean() > best_score:\n",
+    "            best_score = scores.mean()\n",
+    "            best_model = model\n",
+    "            best_model_name = name\n",
+    "            print(f\"  New best!\")\n",
+    "            \n",
+    "    except Exception as e:\n",
+    "        print(f\"  Error: {str(e)[:80]}\")\n",
+    "\n",
+    "print(\"\\n\" + \"=\" * 60)\n",
+    "print(f\"BEST MODEL: {best_model_name}\")\n",
+    "print(f\"Best AUC: {best_score:.6f}\")\n",
+    "print(\"=\" * 60)\n",
+    "print(f\"Total evaluation time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "f96e1cc8",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00735,
+     "end_time": "2025-12-24T04:44:58.000560",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:57.993210",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "edd68934",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007407,
+     "end_time": "2025-12-24T04:44:58.015267",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:58.007860",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 7. Results Comparison"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "94704232",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:44:58.031827Z",
+     "iopub.status.busy": "2025-12-24T04:44:58.031466Z",
+     "iopub.status.idle": "2025-12-24T04:44:58.048110Z",
+     "shell.execute_reply": "2025-12-24T04:44:58.046895Z"
+    },
+    "papermill": {
+     "duration": 0.02799,
+     "end_time": "2025-12-24T04:44:58.050560",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:58.022570",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "7. RESULTS ANALYSIS\n",
+      "================================================================================\n",
+      "\n",
+      "MODEL RANKING:\n",
+      "             Model      AUC      Std Time_s      Diff\n",
+      "          LightGBM 0.714791 0.000811  157.3 +0.000000\n",
+      "           XGBoost 0.713700 0.001436    8.2 -0.001091\n",
+      "  GradientBoosting 0.711093 0.000573  210.7 -0.003699\n",
+      "      RandomForest 0.696339 0.001574   46.1 -0.018452\n",
+      "LogisticRegression 0.694917 0.001055    6.5 -0.019874\n",
+      "        ExtraTrees 0.685132 0.000679   34.8 -0.029659\n",
+      "     SGDClassifier 0.672362 0.001770    2.5 -0.042429\n",
+      "        KNeighbors 0.667917 0.001690   63.7 -0.046875\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"7. RESULTS ANALYSIS\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "# Create ranking\n",
+    "ranking = []\n",
+    "for name, res in results.items():\n",
+    "    ranking.append({\n",
+    "        'Model': name,\n",
+    "        'AUC': f\"{res['auc']:.6f}\",\n",
+    "        'Std': f\"{res['std']:.6f}\",\n",
+    "        'Time_s': f\"{res['time']:.1f}\",\n",
+    "        'Diff': f\"{res['auc'] - best_score:+.6f}\"\n",
+    "    })\n",
+    "\n",
+    "ranking_df = pd.DataFrame(ranking)\n",
+    "ranking_df = ranking_df.sort_values('AUC', ascending=False)\n",
+    "\n",
+    "print(\"\\nMODEL RANKING:\")\n",
+    "print(ranking_df.to_string(index=False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "e0b286f7",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:44:58.067971Z",
+     "iopub.status.busy": "2025-12-24T04:44:58.067660Z",
+     "iopub.status.idle": "2025-12-24T04:44:58.075616Z",
+     "shell.execute_reply": "2025-12-24T04:44:58.074460Z"
+    },
+    "papermill": {
+     "duration": 0.019302,
+     "end_time": "2025-12-24T04:44:58.077938",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:58.058636",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "INSIGHTS:\n",
+      "1. Best model: LightGBM (AUC: 0.714791)\n",
+      "2. Number of models >0.71 AUC: 3\n",
+      "3. Fastest model: SGDClassifier\n",
+      "4. Total evaluation time: 529.8s\n",
+      "\n",
+      "Time: 546.6s\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Insights\n",
+    "print(f\"\\nINSIGHTS:\")\n",
+    "print(f\"1. Best model: {best_model_name} (AUC: {best_score:.6f})\")\n",
+    "print(f\"2. Number of models >0.71 AUC: {sum(float(r['AUC']) > 0.71 for r in ranking)}\")\n",
+    "print(f\"3. Fastest model: {ranking_df.iloc[ranking_df['Time_s'].astype(float).argmin()]['Model']}\")\n",
+    "print(f\"4. Total evaluation time: {sum(float(r['Time_s']) for r in ranking):.1f}s\")\n",
+    "\n",
+    "print(f\"\\nTime: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "522c7c37",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007903,
+     "end_time": "2025-12-24T04:44:58.093735",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:58.085832",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "738afe13",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007981,
+     "end_time": "2025-12-24T04:44:58.109781",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:58.101800",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 8. Load Full Dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "b815a009",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:44:58.126977Z",
+     "iopub.status.busy": "2025-12-24T04:44:58.126661Z",
+     "iopub.status.idle": "2025-12-24T04:45:01.654721Z",
+     "shell.execute_reply": "2025-12-24T04:45:01.653407Z"
+    },
+    "papermill": {
+     "duration": 3.539494,
+     "end_time": "2025-12-24T04:45:01.656935",
+     "exception": false,
+     "start_time": "2025-12-24T04:44:58.117441",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "8. LOADING FULL DATASET\n",
+      "================================================================================\n",
+      "Loading complete dataset for final training...\n",
+      "Full dataset loaded\n",
+      "Training: (700000, 32), Test: (300000, 32)\n",
+      "Time: 550.2s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"8. LOADING FULL DATASET\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "print(\"Loading complete dataset for final training...\")\n",
+    "\n",
+    "full_train = pd.read_csv('/kaggle/input/playground-series-s5e12/train.csv')\n",
+    "full_test = pd.read_csv('/kaggle/input/playground-series-s5e12/test.csv')\n",
+    "\n",
+    "# Apply features\n",
+    "full_train = create_features(full_train)\n",
+    "full_test = create_features(full_test)\n",
+    "\n",
+    "X_full = full_train.drop(['id', 'diagnosed_diabetes'], axis=1)\n",
+    "y_full = full_train['diagnosed_diabetes']\n",
+    "X_test_full = full_test.drop('id', axis=1)\n",
+    "\n",
+    "print(f\"Full dataset loaded\")\n",
+    "print(f\"Training: {X_full.shape}, Test: {X_test_full.shape}\")\n",
+    "print(f\"Time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ff5f9aa3",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00766,
+     "end_time": "2025-12-24T04:45:01.672393",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:01.664733",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "94477d7a",
+   "metadata": {
+    "papermill": {
+     "duration": 0.009889,
+     "end_time": "2025-12-24T04:45:01.690344",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:01.680455",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 9. Train Best Model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "0f4716f4",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:01.709710Z",
+     "iopub.status.busy": "2025-12-24T04:45:01.709345Z",
+     "iopub.status.idle": "2025-12-24T04:45:13.729292Z",
+     "shell.execute_reply": "2025-12-24T04:45:13.728470Z"
+    },
+    "papermill": {
+     "duration": 12.032354,
+     "end_time": "2025-12-24T04:45:13.732032",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:01.699678",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "9. TRAINING LightGBM ON FULL DATA\n",
+      "================================================================================\n",
+      "Training on 700,000 samples...\n",
+      "Training completed in 12.0s\n",
+      "Total time: 562.3s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(f\"9. TRAINING {best_model_name} ON FULL DATA\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "# Create final pipeline\n",
+    "final_pipeline = Pipeline([\n",
+    "    ('preprocessor', preprocessor),\n",
+    "    ('classifier', best_model)\n",
+    "])\n",
+    "\n",
+    "print(f\"Training on {len(X_full):,} samples...\")\n",
+    "train_start = time.time()\n",
+    "final_pipeline.fit(X_full, y_full)\n",
+    "train_time = time.time() - train_start\n",
+    "\n",
+    "print(f\"Training completed in {train_time:.1f}s\")\n",
+    "print(f\"Total time: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "754adeaf",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007891,
+     "end_time": "2025-12-24T04:45:13.749734",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:13.741843",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2da10dbf",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007794,
+     "end_time": "2025-12-24T04:45:13.765272",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:13.757478",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 10. Model Saving (Optional):"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "0556cbd6",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:13.782649Z",
+     "iopub.status.busy": "2025-12-24T04:45:13.782263Z",
+     "iopub.status.idle": "2025-12-24T04:45:13.787601Z",
+     "shell.execute_reply": "2025-12-24T04:45:13.786448Z"
+    },
+    "papermill": {
+     "duration": 0.016628,
+     "end_time": "2025-12-24T04:45:13.789712",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:13.773084",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# print(\"\\n\" + \"=\" * 80)\n",
+    "# print(\"SAVING MODEL...\")\n",
+    "# print(\"=\" * 80)\n",
+    "\n",
+    "# import joblib\n",
+    "# import json\n",
+    "# import os\n",
+    "\n",
+    "# # Save the trained pipeline\n",
+    "# model_filename = f'/kaggle/working/diabetes_model_{best_model_name}.pkl'\n",
+    "# joblib.dump(final_pipeline, model_filename, compress=3)\n",
+    "# print(f\"Model saved: {model_filename}\")\n",
+    "\n",
+    "# # Save feature names\n",
+    "# feature_names = list(X_full.columns)\n",
+    "# with open('/kaggle/working/feature_names.json', 'w') as f:\n",
+    "#     json.dump(feature_names, f)\n",
+    "# print(f\"Feature names saved: /kaggle/working/feature_names.json\")\n",
+    "\n",
+    "# # Save model metadata\n",
+    "# metadata = {\n",
+    "#     'model_name': best_model_name,\n",
+    "#     'model_type': type(best_model).__name__,\n",
+    "#     'cv_score': best_score,\n",
+    "#     'validation_auc': None,  # Will update after validation\n",
+    "#     'training_samples': len(X_full),\n",
+    "#     'training_features': len(feature_names),\n",
+    "#     'training_time': train_time,\n",
+    "#     'features': feature_names,\n",
+    "#     'date_saved': time.strftime(\"%Y-%m-%d %H:%M:%S\")\n",
+    "# }\n",
+    "\n",
+    "# joblib.dump(metadata, '/kaggle/working/model_metadata.pkl')\n",
+    "# print(f\"Metadata saved: /kaggle/working/model_metadata.pkl\")\n",
+    "\n",
+    "# print(f\"\\nModel size: {os.path.getsize(model_filename)/1024:.1f} KB\")\n",
+    "# print(f\"Features used: {len(feature_names)}\")\n",
+    "# print(f\"Best model: {best_model_name} (AUC: {best_score:.6f})\")\n",
+    "\n",
+    "# print(\"\\n\" + \"=\" * 80)\n",
+    "# print(\"MODEL SAVED!\")\n",
+    "# print(\"=\" * 80)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "633444d3",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007757,
+     "end_time": "2025-12-24T04:45:13.805363",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:13.797606",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "1f0bcdab",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007853,
+     "end_time": "2025-12-24T04:45:13.821009",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:13.813156",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 11. Validation Check"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "ca31567b",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:13.838136Z",
+     "iopub.status.busy": "2025-12-24T04:45:13.837769Z",
+     "iopub.status.idle": "2025-12-24T04:45:25.533764Z",
+     "shell.execute_reply": "2025-12-24T04:45:25.532416Z"
+    },
+    "papermill": {
+     "duration": 11.707184,
+     "end_time": "2025-12-24T04:45:25.535822",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:13.828638",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "10. VALIDATION CHECK\n",
+      "================================================================================\n",
+      "Validation AUC: 0.720114\n",
+      "CV AUC was: 0.714791\n",
+      "Difference: +0.005323\n",
+      "Some variation\n",
+      "\n",
+      "Time: 574.1s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"10. VALIDATION CHECK\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.metrics import roc_auc_score\n",
+    "\n",
+    "# Quick validation\n",
+    "X_train_val, X_val, y_train_val, y_val = train_test_split(\n",
+    "    X_full, y_full, test_size=0.1, random_state=42, stratify=y_full\n",
+    ")\n",
+    "\n",
+    "val_pipeline = Pipeline([\n",
+    "    ('preprocessor', preprocessor),\n",
+    "    ('classifier', best_model)\n",
+    "])\n",
+    "\n",
+    "val_pipeline.fit(X_train_val, y_train_val)\n",
+    "val_preds = val_pipeline.predict_proba(X_val)[:, 1]\n",
+    "val_auc = roc_auc_score(y_val, val_preds)\n",
+    "\n",
+    "print(f\"Validation AUC: {val_auc:.6f}\")\n",
+    "print(f\"CV AUC was: {best_score:.6f}\")\n",
+    "print(f\"Difference: {val_auc - best_score:+.6f}\")\n",
+    "\n",
+    "if abs(val_auc - best_score) < 0.005:\n",
+    "    print(\"Results consistent\")\n",
+    "else:\n",
+    "    print(\"Some variation\")\n",
+    "\n",
+    "print(f\"\\nTime: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4fab0975",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00863,
+     "end_time": "2025-12-24T04:45:25.552567",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:25.543937",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "95df47fb",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00827,
+     "end_time": "2025-12-24T04:45:25.569514",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:25.561244",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 12. Make Predictions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "4b11d4b4",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:25.587930Z",
+     "iopub.status.busy": "2025-12-24T04:45:25.587152Z",
+     "iopub.status.idle": "2025-12-24T04:45:27.639703Z",
+     "shell.execute_reply": "2025-12-24T04:45:27.638934Z"
+    },
+    "papermill": {
+     "duration": 2.064388,
+     "end_time": "2025-12-24T04:45:27.641999",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:25.577611",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "11. MAKING PREDICTIONS\n",
+      "================================================================================\n",
+      "Predicting 300,000 test samples...\n",
+      "Predictions completed in 2.0s\n",
+      "\n",
+      "Prediction stats:\n",
+      "  Mean: 0.603075\n",
+      "  Std:  0.180347\n",
+      "  Min:  0.098513\n",
+      "  Max:  0.969827\n",
+      "  <0.1: 0.0%\n",
+      "  >0.9: 4.8%\n",
+      "\n",
+      "Time: 576.2s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"11. MAKING PREDICTIONS\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "print(f\"Predicting {len(X_test_full):,} test samples...\")\n",
+    "pred_start = time.time()\n",
+    "test_predictions = final_pipeline.predict_proba(X_test_full)[:, 1]\n",
+    "pred_time = time.time() - pred_start\n",
+    "\n",
+    "print(f\"Predictions completed in {pred_time:.1f}s\")\n",
+    "\n",
+    "print(f\"\\nPrediction stats:\")\n",
+    "print(f\"  Mean: {test_predictions.mean():.6f}\")\n",
+    "print(f\"  Std:  {test_predictions.std():.6f}\")\n",
+    "print(f\"  Min:  {test_predictions.min():.6f}\")\n",
+    "print(f\"  Max:  {test_predictions.max():.6f}\")\n",
+    "print(f\"  <0.1: {np.mean(test_predictions < 0.1):.1%}\")\n",
+    "print(f\"  >0.9: {np.mean(test_predictions > 0.9):.1%}\")\n",
+    "\n",
+    "print(f\"\\nTime: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "496bcef8",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007997,
+     "end_time": "2025-12-24T04:45:27.659073",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:27.651076",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8662db34",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007795,
+     "end_time": "2025-12-24T04:45:27.674609",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:27.666814",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 13. Create Submission"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "1cea4681",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:27.692015Z",
+     "iopub.status.busy": "2025-12-24T04:45:27.691672Z",
+     "iopub.status.idle": "2025-12-24T04:45:28.357511Z",
+     "shell.execute_reply": "2025-12-24T04:45:28.356247Z"
+    },
+    "papermill": {
+     "duration": 0.677078,
+     "end_time": "2025-12-24T04:45:28.359500",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:27.682422",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "12. CREATE SUBMISSION FILE\n",
+      "================================================================================\n",
+      "Submission saved: /kaggle/working/submission.csv\n",
+      "Size: (300000, 2)\n",
+      "Memory: 4687.6 KB\n",
+      "\n",
+      "Sample predictions:\n",
+      "    id  diagnosed_diabetes\n",
+      "700000            0.521200\n",
+      "700001            0.617628\n",
+      "700002            0.760267\n",
+      "700003            0.450236\n",
+      "700004            0.878922\n",
+      "\n",
+      "Time: 576.9s\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"12. CREATE SUBMISSION FILE\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "submission = pd.DataFrame({\n",
+    "    'id': full_test['id'],\n",
+    "    'diagnosed_diabetes': test_predictions\n",
+    "})\n",
+    "\n",
+    "# Ensure valid probabilities\n",
+    "submission['diagnosed_diabetes'] = submission['diagnosed_diabetes'].clip(0.00001, 0.99999)\n",
+    "\n",
+    "submission_file = '/kaggle/working/submission.csv'\n",
+    "submission.to_csv(submission_file, index=False)\n",
+    "\n",
+    "print(f\"Submission saved: {submission_file}\")\n",
+    "print(f\"Size: {submission.shape}\")\n",
+    "print(f\"Memory: {submission.memory_usage(deep=True).sum()/1024:.1f} KB\")\n",
+    "\n",
+    "print(\"\\nSample predictions:\")\n",
+    "print(submission.head().to_string(index=False))\n",
+    "print(f\"\\nTime: {time.time()-start_time:.1f}s\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d19d15bb",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00799,
+     "end_time": "2025-12-24T04:45:28.375843",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.367853",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "219fba6c",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007902,
+     "end_time": "2025-12-24T04:45:28.391804",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.383902",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 14. Final Summary"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "68b67515",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:28.410234Z",
+     "iopub.status.busy": "2025-12-24T04:45:28.409884Z",
+     "iopub.status.idle": "2025-12-24T04:45:28.422127Z",
+     "shell.execute_reply": "2025-12-24T04:45:28.420719Z"
+    },
+    "papermill": {
+     "duration": 0.024132,
+     "end_time": "2025-12-24T04:45:28.424221",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.400089",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "================================================================================\n",
+      "13. FINAL SUMMARY\n",
+      "================================================================================\n",
+      "8-MODEL PIPELINE COMPLETED IN 9.6 MINUTES\n",
+      "--------------------------------------------------\n",
+      "\n",
+      "BEST MODEL: LightGBM\n",
+      "   CV AUC: 0.714791\n",
+      "   Validation AUC: 0.720114\n",
+      "\n",
+      "TOP 3 MODELS:\n",
+      "   1. LightGBM            : 0.714791 (157.3s) ★\n",
+      "   2. XGBoost             : 0.713700 (8.2s)\n",
+      "   3. GradientBoosting    : 0.711093 (210.7s)\n",
+      "\n",
+      "SUBMISSION:\n",
+      "   File: /kaggle/working/submission.csv\n",
+      "   Predictions: 300,000\n",
+      "   Mean probability: 0.6031\n",
+      "\n",
+      "TIMING:\n",
+      "   Model evaluation: 529.8s\n",
+      "   Full training: 12.0s\n",
+      "   Predictions: 2.0s\n",
+      "   Total: 576.9s (9.6 minutes)\n",
+      "\n",
+      "EXPECTED KAGGLE SCORE:\n",
+      "   AUC likely between: 0.7098 - 0.7198\n",
+      "\n",
+      "================================================================================\n",
+      "\n",
+      "Total time: 9.6 minutes\n",
+      "Finished at: 04:45:28\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "print(\"13. FINAL SUMMARY\")\n",
+    "print(\"=\" * 80)\n",
+    "\n",
+    "total_time = time.time() - start_time\n",
+    "minutes = total_time / 60\n",
+    "\n",
+    "print(f\"8-MODEL PIPELINE COMPLETED IN {minutes:.1f} MINUTES\")\n",
+    "print(\"-\" * 50)\n",
+    "\n",
+    "print(f\"\\nBEST MODEL: {best_model_name}\")\n",
+    "print(f\"   CV AUC: {best_score:.6f}\")\n",
+    "print(f\"   Validation AUC: {val_auc:.6f}\")\n",
+    "\n",
+    "print(f\"\\nTOP 3 MODELS:\")\n",
+    "sorted_models = sorted(results.items(), key=lambda x: x[1]['auc'], reverse=True)\n",
+    "for i, (name, res) in enumerate(sorted_models[:3], 1):\n",
+    "    star = \" ★\" if i == 1 else \"\"\n",
+    "    print(f\"   {i}. {name:20s}: {res['auc']:.6f} ({res['time']:.1f}s){star}\")\n",
+    "\n",
+    "print(f\"\\nSUBMISSION:\")\n",
+    "print(f\"   File: {submission_file}\")\n",
+    "print(f\"   Predictions: {len(test_predictions):,}\")\n",
+    "print(f\"   Mean probability: {test_predictions.mean():.4f}\")\n",
+    "\n",
+    "print(f\"\\nTIMING:\")\n",
+    "print(f\"   Model evaluation: {sum(r['time'] for r in results.values()):.1f}s\")\n",
+    "print(f\"   Full training: {train_time:.1f}s\")\n",
+    "print(f\"   Predictions: {pred_time:.1f}s\")\n",
+    "print(f\"   Total: {total_time:.1f}s ({minutes:.1f} minutes)\")\n",
+    "\n",
+    "print(f\"\\nEXPECTED KAGGLE SCORE:\")\n",
+    "expected_range = f\"{best_score-0.005:.4f} - {best_score+0.005:.4f}\"\n",
+    "print(f\"   AUC likely between: {expected_range}\")\n",
+    "\n",
+    "print(\"\\n\" + \"=\" * 80)\n",
+    "\n",
+    "\n",
+    "print(f\"\\nTotal time: {minutes:.1f} minutes\")\n",
+    "print(f\"Finished at: {datetime.now().strftime('%H:%M:%S')}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "662443f6",
+   "metadata": {
+    "papermill": {
+     "duration": 0.008145,
+     "end_time": "2025-12-24T04:45:28.440738",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.432593",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "04185bf5",
+   "metadata": {
+    "papermill": {
+     "duration": 0.008521,
+     "end_time": "2025-12-24T04:45:28.457455",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.448934",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## 15. Check and download output files (optional)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "f1336b00",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:28.476167Z",
+     "iopub.status.busy": "2025-12-24T04:45:28.475796Z",
+     "iopub.status.idle": "2025-12-24T04:45:28.483806Z",
+     "shell.execute_reply": "2025-12-24T04:45:28.482577Z"
+    },
+    "papermill": {
+     "duration": 0.020374,
+     "end_time": "2025-12-24T04:45:28.486036",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.465662",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CHECKING FILES IN /kaggle/working:\n",
+      "==================================================\n",
+      "__notebook__.ipynb (56.5 KB)\n",
+      "submission.csv (7627.6 KB)\n"
+     ]
+    }
+   ],
+   "source": [
+    "import os\n",
+    "\n",
+    "print(\"CHECKING FILES IN /kaggle/working:\")\n",
+    "print(\"=\" * 50)\n",
+    "\n",
+    "files = os.listdir('/kaggle/working')\n",
+    "if not files:\n",
+    "    print(\"Folder is EMPTY!\")\n",
+    "    print(\"This means the saving code didn't work properly.\")\n",
+    "else:\n",
+    "    for file in files:\n",
+    "        path = f'/kaggle/working/{file}'\n",
+    "        size_kb = os.path.getsize(path) / 1024 if os.path.exists(path) else 0\n",
+    "        print(f\"{file} ({size_kb:.1f} KB)\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "4b7b0ad3",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-12-24T04:45:28.504829Z",
+     "iopub.status.busy": "2025-12-24T04:45:28.504467Z",
+     "iopub.status.idle": "2025-12-24T04:45:28.509879Z",
+     "shell.execute_reply": "2025-12-24T04:45:28.508523Z"
+    },
+    "papermill": {
+     "duration": 0.017607,
+     "end_time": "2025-12-24T04:45:28.512325",
+     "exception": false,
+     "start_time": "2025-12-24T04:45:28.494718",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# import os\n",
+    "# import shutil\n",
+    "# from IPython.display import HTML, display\n",
+    "\n",
+    "# print(\" CREATING DOWNLOAD LINKS...\")\n",
+    "# print(\"=\" * 60)\n",
+    "\n",
+    "# # Create a simple HTML page with download links\n",
+    "# files = ['diabetes_model_LightGBM.pkl', 'feature_names.json', 'model_metadata.pkl', 'submission_file.csv']\n",
+    "\n",
+    "# html_content = \"<h3> Download Your Files:</h3><ul>\"\n",
+    "\n",
+    "# for file in files:\n",
+    "#     path = f'/kaggle/working/{file}'\n",
+    "#     if os.path.exists(path):\n",
+    "#         # Create a data URL for direct download\n",
+    "#         import base64\n",
+    "#         with open(path, 'rb') as f:\n",
+    "#             data = f.read()\n",
+    "#             b64 = base64.b64encode(data).decode()\n",
+    "        \n",
+    "#         html_content += f\"\"\"\n",
+    "#         <li>\n",
+    "#             <a href=\"data:application/octet-stream;base64,{b64}\" download=\"{file}\">\n",
+    "#                 {file} ({len(data)/1024:.1f} KB)\n",
+    "#             </a>\n",
+    "#         </li>\n",
+    "#         \"\"\"\n",
+    "#     else:\n",
+    "#         html_content += f\"<li> {file} not found</li>\"\n",
+    "\n",
+    "# html_content += \"</ul>\"\n",
+    "# display(HTML(html_content))"
+   ]
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [
+    {
+     "databundleVersionId": 14272474,
+     "sourceId": 91723,
+     "sourceType": "competition"
+    }
+   ],
+   "dockerImageVersionId": 31234,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.12"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 584.716807,
+   "end_time": "2025-12-24T04:45:31.144909",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2025-12-24T04:35:46.428102",
+   "version": "2.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
